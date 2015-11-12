@@ -27,9 +27,14 @@ def main():
 	print("New data set columns:")
 	for dtype, cols in col_types.items():
 		print("\t", dtype, ":", len(cols))
+	print("Filtering columns without NaNs")
+	filtered_cols.dropna(axis=1, inplace=True)
+	print(filtered_cols.shape[0], "rows remaining")
+	col_types = filtered_cols.columns.to_series().groupby(filtered_cols.dtypes).groups
+	print("New data set columns:")
+	for dtype, cols in col_types.items():
+		print("\t", dtype, ":", len(cols))
 	print("Filtering rows without NaNs")
-	filtered_cols.dropna()
-	print(src_data.shape[0], "rows remaining")
 	filtered_cols.to_csv(dst_fname)
 if __name__ == "__main__":
 	main()
