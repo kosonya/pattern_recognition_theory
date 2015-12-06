@@ -85,12 +85,12 @@ def main():
 		normalized_filtered_cols_nandrop = normalize_cols(filtered_cols_nandrop, filtered_cols_nandrop.columns, minmax_nandrop)
 
 
-		filtered_cols_nandrop.to_csv('.'.join(src_fname_str.split('.')[:-1] + ['filtered', 'nandrop', 'csv']))
+		filtered_cols_nandrop.to_csv('.'.join(src_fname_str.split('.')[:-1] + ['filtered', 'nandrop', 'csv']), header=False)
 		
-		normalized_filtered_cols_nandrop.to_csv('.'.join(src_fname_str.split('.')[:-1] + ['filtered', 'nandrop', 'normalized', 'csv']))
+		normalized_filtered_cols_nandrop.to_csv('.'.join(src_fname_str.split('.')[:-1] + ['filtered', 'nandrop', 'normalized', 'csv']), header=False)
 
 
-		normalized_filtered_cols.to_csv('.'.join(src_fname_str.split('.')[:-1] + ['filtered', 'normalized', 'csv']))
+		normalized_filtered_cols.to_csv('.'.join(src_fname_str.split('.')[:-1] + ['filtered', 'normalized', 'csv']), header=False)
 
 		
 
