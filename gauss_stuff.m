@@ -2,7 +2,6 @@ curfile = mfilename('fullpath');
 curfile_split = strsplit(curfile, filesep);
 root_folder = curfile_split(1:end-2);
 
-n_eigs = 20;
 
 XY = {'X', 'Y'};
 trval = {'Train', 'validation'};
@@ -105,7 +104,7 @@ for i = 1:length(n_eigses)
     train_ROCs{i, 2} = Y;
     train_ROCs{i, 3} = AUC;
     train_ROCs{i, 4} = n_eigs;
-    train_ROCs{i, 5} = sprintf('n_eigs = %d, AUC = %f', n_eigs, AUC);
+    train_ROCs{i, 5} = sprintf('neigs = %d, AUC = %f', n_eigs, AUC);
     
     fprintf('Making test set predictions... ');
     tic;
@@ -121,7 +120,7 @@ for i = 1:length(n_eigses)
     test_ROCs{i, 2} = Y;
     test_ROCs{i, 3} = AUC;
     test_ROCs{i, 4} = n_eigs;
-    test_ROCs{i, 5} = sprintf('n_eigs = %d, AUC = %f', n_eigs, AUC);
+    test_ROCs{i, 5} = sprintf('neigs = %d, AUC = %f', n_eigs, AUC);
 end
 
 figure('name', 'train Gauss ROCs');
@@ -146,5 +145,81 @@ ylabel('True positive rate')
 title('Test set ROCs for independent Gauss');
 legend({test_ROCs{:,5}}, 'Location', 'southeast');
 
+drawnow;
 
 
+n_eigses = {2, 4, 8, 16, 32, 64};
+train_ROCs = cell(numel(n_eigses), 5);
+test_ROCs = cell(size(train_ROCs));
+
+for i = 1:length(n_eigses)
+    n_eigs = n_eigses{i};
+    fprintf('Traing first %d principal components\n', n_eigs);
+    projmat = projmat_full(:,1:n_eigs);
+
+    fprintf('Projecting data... ');
+    tic;
+    X_train_pca = X_train * projmat;
+    X_Validation_pca = X_Validation * projmat;
+    fprintf('Done! ');
+    toc;
+      
+    fprintf('Training joint Gauss for n_eigs = %d\n', n_eigs);
+    tic;
+    [mus, sigmas, posprior] = train_joint_gauss(X_train_pca, Y_train);
+    fprintf('Done! ');
+    toc;
+    fprintf('Making training set predictions... ');
+    tic;
+    [train_scores] = test_joint_gauss(X_train_pca, mus, sigmas, posprior);
+    fprintf('Done! ');
+    toc;
+    fprintf('Building training ROC... ');
+    tic;
+    [X, Y, ~, AUC] = perfcurve(Y_train, train_scores(:,2), 1);
+    fprintf('Done! ');
+    toc;
+    train_ROCs{i, 1} = X;
+    train_ROCs{i, 2} = Y;
+    train_ROCs{i, 3} = AUC;
+    train_ROCs{i, 4} = n_eigs;
+    train_ROCs{i, 5} = sprintf('neigs = %d, AUC = %f', n_eigs, AUC);
+    
+    fprintf('Making test set predictions... ');
+    tic;
+    [test_scores] = test_joint_gauss(X_Validation_pca, mus, sigmas, posprior);
+    fprintf('Done! ');
+    toc;
+    fprintf('Building validation ROC... ');
+    tic;
+    [X, Y, ~, AUC] = perfcurve(Y_Validation, test_scores(:,2), 1);
+    fprintf('Done! ');
+    toc;
+    test_ROCs{i, 1} = X;
+    test_ROCs{i, 2} = Y;
+    test_ROCs{i, 3} = AUC;
+    test_ROCs{i, 4} = n_eigs;
+    test_ROCs{i, 5} = sprintf('neigs = %d, AUC = %f', n_eigs, AUC);
+end
+
+figure('name', 'train Gauss ROCs');
+for i=1:size(train_ROCs, 1)
+    hold;
+    plot(train_ROCs{i, 1}, train_ROCs{i, 2});
+    hold;
+end
+xlabel('False positive rate')
+ylabel('True positive rate')
+title('Training set ROCs for joint Gauss');
+legend({train_ROCs{:,5}}, 'Location', 'southeast');
+
+figure('name', 'test Gauss ROCs');
+for i=1:size(test_ROCs, 1)
+    hold;
+    plot(test_ROCs{i, 1}, test_ROCs{i, 2});
+    hold;
+end
+xlabel('False positive rate')
+ylabel('True positive rate')
+title('Test set ROCs for joint Gauss');
+legend({test_ROCs{:,5}}, 'Location', 'southeast');
